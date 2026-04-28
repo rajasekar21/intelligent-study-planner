@@ -6,7 +6,7 @@ This project uses a simple 3-layer architecture:
 
 1. React frontend (`frontend`)
 2. FastAPI backend (`backend`)
-3. PostgreSQL database (`database`)
+3. SQLite database (`backend/study_planner.db`)
 
 ## Component Flow
 
@@ -14,7 +14,7 @@ This project uses a simple 3-layer architecture:
 - Frontend calls backend REST APIs using `fetch`.
 - Backend validates input using Pydantic schemas.
 - Backend applies role checks and token verification.
-- SQLAlchemy persists and reads data from PostgreSQL.
+- SQLAlchemy persists and reads data from SQLite.
 
 ## Service Boundary
 
@@ -25,6 +25,6 @@ This project uses a simple 3-layer architecture:
 ## Suggested Diagram (for LMS submission)
 
 Draw a simple block diagram with:
-- React App -> FastAPI API -> PostgreSQL
+- React App -> FastAPI API -> SQLite
 - Add JWT label between React and FastAPI
 - Add modules in FastAPI: Auth, Topics, Planner, Doubts, Insights

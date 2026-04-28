@@ -3,9 +3,9 @@
 Full-stack assignment project using:
 - React (frontend)
 - Python FastAPI (backend)
-- SQLite (lightweight default) / PostgreSQL (optional)
+- SQLite (lightweight default)
 
-This application helps students plan syllabus coverage, generate an adaptive weekly plan, track progress, raise doubts, and view performance insights.
+This AI-powered study planner helps students plan syllabus coverage, generate adaptive weekly plans, track progress, raise doubts, and view performance insights.
 
 ## 1) Project Structure
 
@@ -39,6 +39,7 @@ intelligent-study-planner/
 - Role-based user registration/login (`student`, `mentor`, `admin`)
 - Topic and syllabus deadline management
 - AI-assisted weekly study task generation
+- AI-powered priority scoring using deadlines, difficulty, and unresolved doubts
 - Task status updates (`pending`, `completed`, `missed`)
 - Doubt creation and tracking
 - Student performance insights and risk level
@@ -47,7 +48,7 @@ intelligent-study-planner/
 
 - Frontend: React 18 + Vite
 - Backend: FastAPI + SQLAlchemy
-- Database: SQLite (default), PostgreSQL optional
+- Database: SQLite
 - Auth: simple JWT token generation
 
 ## 4) Prerequisites
@@ -72,11 +73,6 @@ Sample login credentials:
 - `student1@bits.com` / `Test@123`
 - `mentor1@bits.com` / `Test@123`
 - `admin1@bits.com` / `Test@123`
-
-### Optional PostgreSQL setup
-
-- Set `DATABASE_URL` in backend `.env`
-- Run schema from `database/schema.sql`
 
 ## 6) Backend Setup (FastAPI)
 
@@ -203,3 +199,9 @@ Weekly schedule generation allocates topic tasks across 7 days with max daily lo
 - Mentor/Admin can update doubt review status.
 - Admin can access any student data.
 - This project intentionally keeps security simple for assignment scope.
+
+## 13) Contributors and AI Assistance
+
+- Primary developer: `rajasekar21`
+- AI development assistant: Cursor AI (used for code generation, refactoring, debugging support, and documentation drafting)
+- All AI-assisted output was manually reviewed, tested, and integrated before final use.
