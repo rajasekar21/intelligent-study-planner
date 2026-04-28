@@ -17,6 +17,7 @@ const defaultAiLog = {
 function AuthForm({ mode, onSubmit, authForm, setAuthForm, loading, error }) {
   return (
     <div className="card">
+      <p className="muted-text">Welcome to your AI learning workspace</p>
       <h2>{mode === "login" ? "Login" : "Register"}</h2>
       <form onSubmit={onSubmit}>
         {mode === "register" && (
@@ -296,9 +297,30 @@ export default function App() {
         </div>
       </div>
 
+      {insights && (
+        <div className="metrics-grid">
+          <div className="metric-card">
+            <p className="metric-label">Completion Rate</p>
+            <p className="metric-value">{insights.completion_rate}%</p>
+          </div>
+          <div className="metric-card">
+            <p className="metric-label">Missed Tasks</p>
+            <p className="metric-value">{insights.missed_tasks}</p>
+          </div>
+          <div className="metric-card">
+            <p className="metric-label">Open Doubts</p>
+            <p className="metric-value">{insights.open_doubts}</p>
+          </div>
+          <div className="metric-card">
+            <p className="metric-label">Risk Level</p>
+            <p className="metric-value">{insights.risk_level}</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid">
         <section className="card">
-          <h2>Add Syllabus Topic</h2>
+          <h2 className="section-title">Add Syllabus Topic</h2>
           <form onSubmit={handleAddTopic}>
             <label>Subject</label>
             <input
@@ -332,7 +354,7 @@ export default function App() {
         </section>
 
         <section className="card">
-          <h2>Raise Doubt</h2>
+          <h2 className="section-title">Raise Doubt</h2>
           <form onSubmit={handleAddDoubt}>
             <label>Topic ID (optional)</label>
             <input value={doubtForm.topic_id} onChange={(e) => setDoubtForm({ ...doubtForm, topic_id: e.target.value })} />
@@ -355,7 +377,7 @@ export default function App() {
 
       <div className="grid">
         <section className="card">
-          <h2>Topics</h2>
+          <h2 className="section-title">Topics</h2>
           <label>Search by subject/title</label>
           <input value={topicSearch} onChange={(e) => setTopicSearch(e.target.value)} placeholder="e.g. Math, Arrays..." />
           {topics.length === 0 ? (
@@ -416,14 +438,18 @@ export default function App() {
         </section>
 
         <section className="card">
-          <h2>Weekly Tasks</h2>
+          <h2 className="section-title">Weekly Tasks</h2>
           {tasks.length === 0 ? (
             <p>No tasks generated yet.</p>
           ) : (
             <ul>
               {tasks.map((task) => (
                 <li key={task.id}>
-                  Task #{task.id} | Topic #{task.topic_id} | {task.task_date} | {task.status}
+                  <div className="item-row">
+                    <span>Task #{task.id}</span>
+                    <span className={`status-chip status-${task.status}`}>{task.status}</span>
+                  </div>
+                  <p>Topic #{task.topic_id} | {task.task_date}</p>
                   <div className="actions">
                     <button onClick={() => handleTaskStatus(task.id, "completed")}>Complete</button>
                     <button onClick={() => handleTaskStatus(task.id, "missed")}>Missed</button>
@@ -437,14 +463,17 @@ export default function App() {
 
       <div className="grid">
         <section className="card">
-          <h2>Doubts</h2>
+          <h2 className="section-title">Doubts</h2>
           {doubts.length === 0 ? (
             <p>No doubts raised.</p>
           ) : (
             <ul>
               {doubts.map((doubt) => (
                 <li key={doubt.id}>
-                  <strong>{doubt.title}</strong> - {doubt.status}
+                  <div className="item-row">
+                    <strong>{doubt.title}</strong>
+                    <span className={`status-chip status-${doubt.status}`}>{doubt.status}</span>
+                  </div>
                   <p>{doubt.description}</p>
                 </li>
               ))}
@@ -453,7 +482,7 @@ export default function App() {
         </section>
 
         <section className="card">
-          <h2>Performance Insights</h2>
+          <h2 className="section-title">Performance Insights</h2>
           {!insights ? (
             <p>No insights yet.</p>
           ) : (
@@ -469,7 +498,7 @@ export default function App() {
 
       <div className="grid">
         <section className="card">
-          <h2>AI Usage Log (DB)</h2>
+          <h2 className="section-title">AI Usage Log (DB)</h2>
           <form onSubmit={handleAddAiLog}>
             <label>Tool Name</label>
             <input
@@ -516,7 +545,7 @@ export default function App() {
         </section>
 
         <section className="card">
-          <h2>Saved AI Logs</h2>
+          <h2 className="section-title">Saved AI Logs</h2>
           <div className="actions">
             <button onClick={handleExportAiLogs}>Generate Markdown Export</button>
             <button className="secondary-btn" onClick={handleCopyAiExport} disabled={!aiExportMarkdown}>
@@ -557,7 +586,8 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>Intelligent Study Planner and Doubt Tracker</h1>
+      <h1>AI Powered Study Planner</h1>
+      <p className="page-subtitle">Plan smart, track progress, and improve with AI-powered insights.</p>
       <Routes>
         <Route
           path="/login"
