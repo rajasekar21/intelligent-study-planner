@@ -38,3 +38,16 @@ CREATE TABLE IF NOT EXISTS doubts (
     mentor_comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS ai_usage_logs (
+    id SERIAL PRIMARY KEY,
+    student_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    tool_name VARCHAR(80) NOT NULL,
+    prompt_text TEXT NOT NULL,
+    completion_summary TEXT NOT NULL,
+    action_taken TEXT NOT NULL,
+    files_impacted TEXT,
+    used_in_code BOOLEAN NOT NULL DEFAULT TRUE,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -90,6 +90,37 @@ ul {
   margin: 0;
 }
 
+.secondary-btn {
+  background: #6b7280;
+}
+
+.secondary-btn:hover {
+  background: #4b5563;
+}
+
+.danger-btn {
+  background: #dc2626;
+}
+
+.danger-btn:hover {
+  background: #b91c1c;
+}
+
+.checkbox-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.checkbox-line input {
+  width: auto;
+}
+
+.mono-area {
+  font-family: Consolas, "Courier New", monospace;
+}
+
 .error {
   color: #b91c1c;
   font-weight: 700;

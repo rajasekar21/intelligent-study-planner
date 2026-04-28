@@ -1,14 +1,17 @@
 from collections import defaultdict
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .ai import build_week_dates, calculate_priority
-from .auth import create_access_token, hash_password, verify_password
+from .auth import create_access_token, decode_access_token, hash_password, verify_password
 from .database import Base, engine, get_db
-from .models import Doubt, StudyTask, Topic, User
+from .models import AIUsageLog, Doubt, StudyTask, Topic, User
 from .schemas import (
+    AIUsageLogCreate,
+    AIUsageLogOut,
     DoubtCreate,
     DoubtOut,
     DoubtUpdate,
@@ -17,6 +20,7 @@ from .schemas import (
     TaskStatusUpdate,
     TopicCreate,
     TopicOut,
+    TopicUpdate,
     UserCreate,
     UserOut,
 )
@@ -24,6 +28,7 @@ from .schemas import (
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Intelligent Study Planner API", version="1.0.0")
+security = HTTPBearer()
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,6 +42,32 @@ app.add_middleware(
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+) -> User:
+    payload = decode_access_token(credentials.credentials)
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    return user
+
+
+def ensure_same_user_or_admin(current_user: User, student_id: int) -> None:
+    if current_user.role == "admin":
+        return
+    if current_user.id != student_id:
+        raise HTTPException(status_code=403, detail="You can only access your own data")
+
+
+def ensure_student(current_user: User) -> None:
+    if current_user.role != "student":
+        raise HTTPException(status_code=403, detail="Only student role can perform this action")
 
 
 @app.post("/auth/register", response_model=UserOut)
@@ -68,11 +99,17 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
 
 @app.post("/topics", response_model=TopicOut)
-def create_topic(payload: TopicCreate, student_id: int = Query(...), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == student_id).first()
-    if not user or user.role != "student":
+def create_topic(
+    payload: TopicCreate,
+    student_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    ensure_same_user_or_admin(current_user, student_id)
+    target_user = db.query(User).filter(User.id == student_id).first()
+    if not target_user:
         raise HTTPException(status_code=404, detail="Student not found")
-
+    ensure_student(target_user)
     topic = Topic(
         student_id=student_id,
         subject=payload.subject,
@@ -87,12 +124,65 @@ def create_topic(payload: TopicCreate, student_id: int = Query(...), db: Session
 
 
 @app.get("/topics", response_model=list[TopicOut])
-def get_topics(student_id: int = Query(...), db: Session = Depends(get_db)):
-    return db.query(Topic).filter(Topic.student_id == student_id).order_by(Topic.deadline.asc()).all()
+def get_topics(
+    student_id: int = Query(...),
+    search: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    ensure_same_user_or_admin(current_user, student_id)
+    query = db.query(Topic).filter(Topic.student_id == student_id)
+    if search:
+        text = f"%{search.strip()}%"
+        query = query.filter((Topic.subject.ilike(text)) | (Topic.title.ilike(text)))
+    return query.order_by(Topic.deadline.asc()).all()
+
+
+@app.put("/topics/{topic_id}", response_model=TopicOut)
+def update_topic(
+    topic_id: int,
+    payload: TopicUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    topic = db.query(Topic).filter(Topic.id == topic_id).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    ensure_same_user_or_admin(current_user, topic.student_id)
+    topic.subject = payload.subject
+    topic.title = payload.title
+    topic.deadline = payload.deadline
+    topic.difficulty = payload.difficulty
+    topic.is_completed = payload.is_completed
+    db.commit()
+    db.refresh(topic)
+    return topic
+
+
+@app.delete("/topics/{topic_id}")
+def delete_topic(
+    topic_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    topic = db.query(Topic).filter(Topic.id == topic_id).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    ensure_same_user_or_admin(current_user, topic.student_id)
+    db.query(StudyTask).filter(StudyTask.topic_id == topic.id).delete()
+    db.query(Doubt).filter(Doubt.topic_id == topic.id).delete()
+    db.delete(topic)
+    db.commit()
+    return {"message": "Topic deleted"}
 
 
 @app.post("/planner/generate", response_model=list[TaskOut])
-def generate_week_plan(student_id: int = Query(...), db: Session = Depends(get_db)):
+def generate_week_plan(
+    student_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    ensure_same_user_or_admin(current_user, student_id)
     topics = (
         db.query(Topic)
         .filter(Topic.student_id == student_id, Topic.is_completed.is_(False))
@@ -136,7 +226,12 @@ def generate_week_plan(student_id: int = Query(...), db: Session = Depends(get_d
 
 
 @app.get("/planner/week", response_model=list[TaskOut])
-def get_week_plan(student_id: int = Query(...), db: Session = Depends(get_db)):
+def get_week_plan(
+    student_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    ensure_same_user_or_admin(current_user, student_id)
     return (
         db.query(StudyTask)
         .filter(StudyTask.student_id == student_id)
@@ -146,10 +241,16 @@ def get_week_plan(student_id: int = Query(...), db: Session = Depends(get_db)):
 
 
 @app.patch("/planner/task/{task_id}", response_model=TaskOut)
-def update_task_status(task_id: int, payload: TaskStatusUpdate, db: Session = Depends(get_db)):
+def update_task_status(
+    task_id: int,
+    payload: TaskStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     task = db.query(StudyTask).filter(StudyTask.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    ensure_same_user_or_admin(current_user, task.student_id)
     task.status = payload.status
     db.commit()
     db.refresh(task)
@@ -157,7 +258,13 @@ def update_task_status(task_id: int, payload: TaskStatusUpdate, db: Session = De
 
 
 @app.post("/doubts", response_model=DoubtOut)
-def create_doubt(payload: DoubtCreate, student_id: int = Query(...), db: Session = Depends(get_db)):
+def create_doubt(
+    payload: DoubtCreate,
+    student_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    ensure_same_user_or_admin(current_user, student_id)
     doubt = Doubt(
         student_id=student_id,
         topic_id=payload.topic_id,
@@ -171,15 +278,27 @@ def create_doubt(payload: DoubtCreate, student_id: int = Query(...), db: Session
 
 
 @app.get("/doubts", response_model=list[DoubtOut])
-def get_doubts(student_id: int = Query(...), db: Session = Depends(get_db)):
+def get_doubts(
+    student_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    ensure_same_user_or_admin(current_user, student_id)
     return db.query(Doubt).filter(Doubt.student_id == student_id).order_by(Doubt.id.desc()).all()
 
 
 @app.patch("/doubts/{doubt_id}", response_model=DoubtOut)
-def update_doubt(doubt_id: int, payload: DoubtUpdate, db: Session = Depends(get_db)):
+def update_doubt(
+    doubt_id: int,
+    payload: DoubtUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     doubt = db.query(Doubt).filter(Doubt.id == doubt_id).first()
     if not doubt:
         raise HTTPException(status_code=404, detail="Doubt not found")
+    if current_user.role == "student":
+        raise HTTPException(status_code=403, detail="Only mentor/admin can review doubts")
     doubt.status = payload.status
     doubt.mentor_comment = payload.mentor_comment
     db.commit()
@@ -188,7 +307,12 @@ def update_doubt(doubt_id: int, payload: DoubtUpdate, db: Session = Depends(get_
 
 
 @app.get("/insights/student/{student_id}")
-def student_insights(student_id: int, db: Session = Depends(get_db)):
+def student_insights(
+    student_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    ensure_same_user_or_admin(current_user, student_id)
     total = db.query(StudyTask).filter(StudyTask.student_id == student_id).count()
     completed = (
         db.query(StudyTask)
@@ -216,3 +340,80 @@ def student_insights(student_id: int, db: Session = Depends(get_db)):
         "completion_rate": completion_rate,
         "risk_level": risk,
     }
+
+
+@app.post("/ai-logs", response_model=AIUsageLogOut)
+def create_ai_log(
+    payload: AIUsageLogCreate,
+    student_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    ensure_same_user_or_admin(current_user, student_id)
+    log = AIUsageLog(
+        student_id=student_id,
+        tool_name=payload.tool_name,
+        prompt_text=payload.prompt_text,
+        completion_summary=payload.completion_summary,
+        action_taken=payload.action_taken,
+        files_impacted=payload.files_impacted,
+        used_in_code=payload.used_in_code,
+        notes=payload.notes,
+    )
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+    return log
+
+
+@app.get("/ai-logs", response_model=list[AIUsageLogOut])
+def get_ai_logs(
+    student_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    ensure_same_user_or_admin(current_user, student_id)
+    return db.query(AIUsageLog).filter(AIUsageLog.student_id == student_id).order_by(AIUsageLog.id.desc()).all()
+
+
+@app.delete("/ai-logs/{log_id}")
+def delete_ai_log(
+    log_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    log = db.query(AIUsageLog).filter(AIUsageLog.id == log_id).first()
+    if not log:
+        raise HTTPException(status_code=404, detail="AI log not found")
+    ensure_same_user_or_admin(current_user, log.student_id)
+    db.delete(log)
+    db.commit()
+    return {"message": "AI log deleted"}
+
+
+@app.get("/ai-logs/export")
+def export_ai_logs_markdown(
+    student_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    ensure_same_user_or_admin(current_user, student_id)
+    logs = db.query(AIUsageLog).filter(AIUsageLog.student_id == student_id).order_by(AIUsageLog.id.asc()).all()
+    lines = [
+        "# AI Usage Log",
+        "",
+        "| Date | Tool | Prompt Summary | Output Used? | Files Impacted | Action Taken | Notes |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for log in logs:
+        used_text = "Yes" if log.used_in_code else "No"
+        prompt = (log.prompt_text or "").replace("\n", " ").replace("|", "\\|")
+        completion = (log.completion_summary or "").replace("\n", " ").replace("|", "\\|")
+        action = (log.action_taken or "").replace("\n", " ").replace("|", "\\|")
+        files = (log.files_impacted or "-").replace("\n", " ").replace("|", "\\|")
+        notes = (log.notes or "-").replace("\n", " ").replace("|", "\\|")
+        date_text = str(getattr(log, "created_at", "") or "")
+        lines.append(
+            f"| {date_text} | {log.tool_name} | {prompt} / {completion} | {used_text} | {files} | {action} | {notes} |"
+        )
+    return {"markdown": "\n".join(lines), "count": len(logs)}

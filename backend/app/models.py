@@ -51,3 +51,18 @@ class Doubt(Base):
     status = Column(String(30), nullable=False, default="open")
     mentor_comment = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class AIUsageLog(Base):
+    __tablename__ = "ai_usage_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    tool_name = Column(String(80), nullable=False)
+    prompt_text = Column(Text, nullable=False)
+    completion_summary = Column(Text, nullable=False)
+    action_taken = Column(Text, nullable=False)
+    files_impacted = Column(Text, nullable=True)
+    used_in_code = Column(Boolean, nullable=False, default=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

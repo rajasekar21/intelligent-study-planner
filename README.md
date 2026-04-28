@@ -3,7 +3,7 @@
 Full-stack assignment project using:
 - React (frontend)
 - Python FastAPI (backend)
-- PostgreSQL (database)
+- SQLite (lightweight default) / PostgreSQL (optional)
 
 This application helps students plan syllabus coverage, generate an adaptive weekly plan, track progress, raise doubts, and view performance insights.
 
@@ -47,7 +47,7 @@ intelligent-study-planner/
 
 - Frontend: React 18 + Vite
 - Backend: FastAPI + SQLAlchemy
-- Database: PostgreSQL
+- Database: SQLite (default), PostgreSQL optional
 - Auth: simple JWT token generation
 
 ## 4) Prerequisites
@@ -55,15 +55,28 @@ intelligent-study-planner/
 Install the following on your machine:
 - Node.js (includes `npm`) version 18+
 - Python 3.10+
-- PostgreSQL 14+
 
 ## 5) Database Setup
 
-1. Create database:
-   ```sql
-   CREATE DATABASE study_planner_db;
-   ```
-2. Run schema from `database/schema.sql` in PostgreSQL.
+### Lightweight default (recommended)
+
+From `backend` run:
+
+```bash
+python init_lightweight_db.py
+```
+
+This creates `backend/study_planner.db` and imports sample data.
+
+Sample login credentials:
+- `student1@bits.com` / `Test@123`
+- `mentor1@bits.com` / `Test@123`
+- `admin1@bits.com` / `Test@123`
+
+### Optional PostgreSQL setup
+
+- Set `DATABASE_URL` in backend `.env`
+- Run schema from `database/schema.sql`
 
 ## 6) Backend Setup (FastAPI)
 
@@ -112,6 +125,13 @@ npm run dev
 
 Frontend URL: `http://127.0.0.1:5173`
 
+Frontend environment:
+
+```bash
+# frontend/.env
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
 ## 8) API Endpoints
 
 ### Auth
@@ -121,6 +141,9 @@ Frontend URL: `http://127.0.0.1:5173`
 ### Topics
 - `POST /topics?student_id={id}`
 - `GET /topics?student_id={id}`
+- `GET /topics?student_id={id}&search={text}`
+- `PUT /topics/{topic_id}`
+- `DELETE /topics/{topic_id}`
 
 ### Planner
 - `POST /planner/generate?student_id={id}`
@@ -134,6 +157,15 @@ Frontend URL: `http://127.0.0.1:5173`
 
 ### Insights
 - `GET /insights/student/{student_id}`
+
+### AI Usage Logs (DB)
+- `POST /ai-logs?student_id={id}`
+- `GET /ai-logs?student_id={id}`
+- `DELETE /ai-logs/{log_id}`
+- `GET /ai-logs/export?student_id={id}` (markdown export for report)
+
+All protected endpoints require:
+- `Authorization: Bearer <access_token>`
 
 ## 9) AI Logic Included
 
@@ -159,7 +191,15 @@ Weekly schedule generation allocates topic tasks across 7 days with max daily lo
 - Integration: implemented
 - AI-assisted module: implemented (`ai.py`)
 - Ready for:
-  - architecture diagram
-  - AI usage log
-  - demo video
-  - reflection report
+  - architecture diagram (`docs/architecture.md`)
+  - AI usage log (`docs/ai-usage-log.md`)
+  - reflection report (`docs/reflection-report.md`)
+  - API documentation notes (`docs/api.md`)
+
+## 12) Role and Security Scope (Simple Version)
+
+- JWT-based token verification added to protected APIs.
+- Student can access only own data.
+- Mentor/Admin can update doubt review status.
+- Admin can access any student data.
+- This project intentionally keeps security simple for assignment scope.

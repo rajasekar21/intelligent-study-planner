@@ -33,6 +33,14 @@ class TopicCreate(BaseModel):
     difficulty: int = Field(default=3, ge=1, le=5)
 
 
+class TopicUpdate(BaseModel):
+    subject: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    deadline: date
+    difficulty: int = Field(default=3, ge=1, le=5)
+    is_completed: bool = False
+
+
 class TopicOut(BaseModel):
     id: int
     student_id: int
@@ -82,6 +90,31 @@ class DoubtOut(BaseModel):
     description: str
     status: str
     mentor_comment: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class AIUsageLogCreate(BaseModel):
+    tool_name: str = Field(min_length=2, max_length=80)
+    prompt_text: str = Field(min_length=3)
+    completion_summary: str = Field(min_length=3)
+    action_taken: str = Field(min_length=3)
+    files_impacted: Optional[str] = None
+    used_in_code: bool = True
+    notes: Optional[str] = None
+
+
+class AIUsageLogOut(BaseModel):
+    id: int
+    student_id: int
+    tool_name: str
+    prompt_text: str
+    completion_summary: str
+    action_taken: str
+    files_impacted: Optional[str]
+    used_in_code: bool
+    notes: Optional[str]
 
     class Config:
         from_attributes = True
