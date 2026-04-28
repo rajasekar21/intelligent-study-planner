@@ -7,3 +7,5 @@ __pycache__/
 venv/
 *.pyc
 .env
+backend/study_planner.db
+frontend/demo-videos/*.webm
