@@ -50,6 +50,27 @@ h2 {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
+.auth-card {
+  max-width: 460px;
+  margin: 18px auto 16px;
+  padding: 16px;
+}
+
+.auth-card h2 {
+  margin-bottom: 10px;
+}
+
+.auth-card label {
+  margin: 8px 0 4px;
+}
+
+.auth-card input,
+.auth-card select,
+.auth-card textarea,
+.auth-card button {
+  padding: 9px 11px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -266,6 +287,10 @@ p {
 .muted-text {
   color: #64748b;
   margin: 0 0 6px;
+}
+
+.auth-switch {
+  margin-top: 10px;
 }
 
 @media (max-width: 900px) {
