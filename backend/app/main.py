@@ -195,7 +195,10 @@ def generate_week_plan(
     if not topics:
         return []
 
-    db.query(StudyTask).filter(StudyTask.student_id == student_id).delete()
+    db.query(StudyTask).filter(
+        StudyTask.student_id == student_id,
+        StudyTask.status == "pending",
+    ).delete()
     db.commit()
 
     ai_topics = []

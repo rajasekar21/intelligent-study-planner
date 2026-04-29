@@ -19,8 +19,15 @@ const defaultAiLog = {
 
 export default function App() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState("");
+  const [user, setUser] = useState(() => {
+    try {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
   const [authForm, setAuthForm] = useState({
     name: "",
     email: "",
@@ -89,6 +96,8 @@ export default function App() {
       const result = await api.login({ email: authForm.email, password: authForm.password });
       setUser(result.user);
       setToken(result.access_token);
+      localStorage.setItem("token", result.access_token);
+      localStorage.setItem("user", JSON.stringify(result.user));
       navigate("/dashboard");
     } catch (err) {
       setError(err.message);
@@ -111,6 +120,10 @@ export default function App() {
 
   const handleGeneratePlan = async () => {
     setError("");
+    const shouldRegenerate = window.confirm(
+      "Regenerating will refresh pending tasks. Completed/missed tasks are kept. Continue?"
+    );
+    if (!shouldRegenerate) return;
     try {
       await api.generatePlan(studentId, token);
       await loadDashboard();
@@ -189,6 +202,8 @@ export default function App() {
     setInsights(null);
     setAiLogs([]);
     setAiLogForm(defaultAiLog);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/login");
   };
 

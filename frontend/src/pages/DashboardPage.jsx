@@ -105,8 +105,15 @@ export default function DashboardPage({
         <section className="card">
           <h2 className="section-title">Raise Doubt</h2>
           <form onSubmit={handleAddDoubt}>
-            <label>Topic ID (optional)</label>
-            <input value={doubtForm.topic_id} onChange={(e) => setDoubtForm({ ...doubtForm, topic_id: e.target.value })} />
+            <label>Topic (optional)</label>
+            <select value={doubtForm.topic_id} onChange={(e) => setDoubtForm({ ...doubtForm, topic_id: e.target.value })}>
+              <option value="">Select a topic</option>
+              {topics.map((topic) => (
+                <option key={topic.id} value={topic.id}>
+                  {topic.subject} - {topic.title}
+                </option>
+              ))}
+            </select>
             <label>Title</label>
             <input
               value={doubtForm.title}

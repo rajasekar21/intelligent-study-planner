@@ -24,7 +24,6 @@ export default function AuthForm({
             <select value={authForm.role} onChange={(e) => setAuthForm({ ...authForm, role: e.target.value })}>
               <option value="student">student</option>
               <option value="mentor">mentor</option>
-              <option value="admin">admin</option>
             </select>
           </>
         )}
