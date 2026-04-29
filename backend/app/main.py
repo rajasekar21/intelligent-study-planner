@@ -1,10 +1,13 @@
-from collections import defaultdict
+import os
+from datetime import date
 
+import httpx
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from .ai import build_week_dates, calculate_priority
 from .auth import create_access_token, get_current_user, hash_password, require_role, verify_password
 from .database import Base, engine, get_db
 from .models import AIUsageLog, Doubt, StudyTask, Topic, User
@@ -24,6 +27,9 @@ from .schemas import (
     UserOut,
 )
 
+load_dotenv()
+AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://127.0.0.1:8001")
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Intelligent Study Planner API", version="1.0.0")
@@ -40,6 +46,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(_request, _exc):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
 
 
 @app.get("/health")
@@ -184,29 +198,41 @@ def generate_week_plan(
     db.query(StudyTask).filter(StudyTask.student_id == student_id).delete()
     db.commit()
 
-    week_dates = build_week_dates()
-    by_day_hours = defaultdict(int)
-    max_hours_per_day = 3
-
-    created_tasks: list[StudyTask] = []
+    ai_topics = []
     for topic in topics:
         unresolved = db.query(Doubt).filter(Doubt.topic_id == topic.id, Doubt.status != "resolved").count()
-        score = calculate_priority(topic.deadline, topic.difficulty, unresolved)
+        ai_topics.append(
+            {
+                "topic_id": topic.id,
+                "deadline": str(topic.deadline),
+                "difficulty": topic.difficulty,
+                "unresolved_doubts": unresolved,
+            }
+        )
 
-        for day in week_dates:
-            if by_day_hours[day] < max_hours_per_day:
-                task = StudyTask(
-                    student_id=student_id,
-                    topic_id=topic.id,
-                    task_date=day,
-                    hours_planned=1,
-                    status="pending",
-                    priority_score=score,
-                )
-                db.add(task)
-                created_tasks.append(task)
-                by_day_hours[day] += 1
-                break
+    try:
+        response = httpx.post(
+            f"{AI_SERVICE_URL}/generate-plan",
+            json={"student_id": student_id, "topics": ai_topics},
+            timeout=20.0,
+        )
+        response.raise_for_status()
+        plan_payload = response.json()
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="AI planning service unavailable") from exc
+
+    created_tasks: list[StudyTask] = []
+    for item in plan_payload:
+        task = StudyTask(
+            student_id=item["student_id"],
+            topic_id=item["topic_id"],
+            task_date=date.fromisoformat(item["task_date"]),
+            hours_planned=item["hours_planned"],
+            status=item["status"],
+            priority_score=item["priority_score"],
+        )
+        db.add(task)
+        created_tasks.append(task)
 
     db.commit()
     for task in created_tasks:

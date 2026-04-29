@@ -11,9 +11,12 @@ This AI-powered study planner helps students plan syllabus coverage, generate ad
 
 ```
 intelligent-study-planner/
+├── ai-service/
+│   ├── .env.example
+│   ├── main.py
+│   └── requirements.txt
 ├── backend/
 │   ├── app/
-│   │   ├── ai.py
 │   │   ├── auth.py
 │   │   ├── database.py
 │   │   ├── main.py
@@ -38,7 +41,7 @@ intelligent-study-planner/
 
 - Role-based user registration/login (`student`, `mentor`, `admin`)
 - Topic and syllabus deadline management
-- AI-assisted weekly study task generation
+- AI-assisted weekly study task generation (via dedicated AI microservice)
 - AI-powered priority scoring using deadlines, difficulty, and unresolved doubts
 - Task status updates (`pending`, `completed`, `missed`)
 - Doubt creation and tracking
@@ -48,6 +51,7 @@ intelligent-study-planner/
 
 - Frontend: React 18 + Vite
 - Backend: FastAPI + SQLAlchemy
+- AI Service: FastAPI microservice (port 8001)
 - Database: SQLite
 - Auth: simple JWT token generation
 
@@ -74,7 +78,32 @@ Sample login credentials:
 - `mentor1@bits.com` / `Test@123`
 - `admin1@bits.com` / `Test@123`
 
-## 6) Backend Setup (FastAPI)
+## 6) AI Service Setup (FastAPI, Port 8001)
+
+From project root:
+
+```bash
+cd ai-service
+python -m venv .venv
+```
+
+Activate venv and run:
+
+```bash
+pip install -r requirements.txt
+copy .env.example .env   # Windows
+# cp .env.example .env   # macOS/Linux
+uvicorn main:app --reload --port 8001
+```
+
+AI service URL: `http://127.0.0.1:8001`
+
+Endpoints:
+- `POST /generate-plan`
+- `POST /priority-score`
+- `GET /health`
+
+## 7) Backend Setup (FastAPI, Port 8000)
 
 From project root:
 
@@ -109,7 +138,9 @@ Health check: `GET /health`
 
 Swagger docs: `http://127.0.0.1:8000/docs`
 
-## 7) Frontend Setup (React + Vite)
+Note: backend expects AI service at `AI_SERVICE_URL` (default `http://127.0.0.1:8001`).
+
+## 8) Frontend Setup (React + Vite)
 
 From project root:
 
@@ -139,7 +170,7 @@ VITE_API_BASE_URL=http://127.0.0.1:8000
   - Insights dashboard
   - AI usage log creation and markdown export
 
-## 8) API Endpoints
+## 9) API Endpoints
 
 ### Auth
 - `POST /auth/register`
@@ -174,24 +205,23 @@ VITE_API_BASE_URL=http://127.0.0.1:8000
 All protected endpoints require:
 - `Authorization: Bearer <access_token>`
 
-## 9) AI Logic Included
+## 10) AI Logic Included
 
-In `backend/app/ai.py`, planner logic computes priority score using:
+In `ai-service/main.py`, planner logic computes priority score using:
 - deadline urgency
 - topic difficulty
 - unresolved doubts
 
 Weekly schedule generation allocates topic tasks across 7 days with max daily load.
 
-## 10) Suggested Next Improvements
+## 11) Suggested Next Improvements
 
 - Stronger refresh-token and session management
 - Separate mentor/admin dashboards and route guards
-- AI service as standalone microservice
 - Better planning algorithm using study-hour preferences and exam calendar
 - Unit tests and integration tests
 
-## 11) Assignment Deliverable Mapping
+## 12) Assignment Deliverable Mapping
 
 - Backend APIs + validation + docs: implemented
 - Frontend UI + interactivity: implemented
@@ -203,7 +233,7 @@ Weekly schedule generation allocates topic tasks across 7 days with max daily lo
   - reflection report (`docs/reflection-report.md`)
   - API documentation notes (`docs/api.md`)
 
-## 12) Role and Security Scope (Simple Version)
+## 13) Role and Security Scope (Simple Version)
 
 - JWT-based token verification added to protected APIs.
 - Student can access only own data.
@@ -211,7 +241,7 @@ Weekly schedule generation allocates topic tasks across 7 days with max daily lo
 - Admin can access any student data.
 - This project intentionally keeps security simple for assignment scope.
 
-## 13) Contributors and AI Assistance
+## 14) Contributors and AI Assistance
 
 - Primary developer: `rajasekar21`
 - AI development assistant: Cursor AI (used for code generation, refactoring, debugging support, and documentation drafting)
