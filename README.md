@@ -128,6 +128,17 @@ Frontend environment:
 VITE_API_BASE_URL=http://127.0.0.1:8000
 ```
 
+## Demo Video
+
+- Google Drive demo link: [Add your demo video link here](https://drive.google.com/)
+- Suggested flow covered in demo:
+  - Login/Register
+  - Topic CRUD and search
+  - AI weekly planner generation and task status update
+  - Doubt submission and tracking
+  - Insights dashboard
+  - AI usage log creation and markdown export
+
 ## 8) API Endpoints
 
 ### Auth
