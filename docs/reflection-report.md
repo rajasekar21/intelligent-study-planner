@@ -1,45 +1,67 @@
-# Reflection Report (1-2 pages)
+# Reflection Report
 
-## 1) AI Tools Used
+## 1) AI Tool Used and Workflow
 
-- Tool(s): Cursor AI assistant
-- Usage style: iterative prompting for backend, frontend, and documentation improvements
+I used Cursor AI as the primary assistant during development. The workflow was iterative: define a focused task, generate a first pass, validate the output in the running app/API, then manually refine and commit. This approach was used for backend features, frontend refactoring, documentation, and demo automation.
 
-## 2) Example Prompts
+## 2) Representative Prompts Used
 
-- "Add simple JWT authentication for protected endpoints."
-- "Keep it simple and add complete topic CRUD with minimal UI changes."
-- "Refactor this single-page app into route-based navigation."
+- "Add JWT verification and role checks for protected routes."
+- "Keep it simple, add full topic CRUD and search end-to-end."
+- "Refactor frontend into route-based pages and modular components."
+- "Generate Playwright script for end-to-end workflow video."
+- "Migrate from PostgreSQL footprint to lightweight SQLite setup."
 
-## 3) AI vs Manual Contribution
+## 3) AI-Generated vs Manual Work
 
-- AI-assisted:
-  - Initial code suggestions for JWT checks and route guards.
-  - Topic CRUD endpoint and frontend wiring.
-  - README and docs template generation.
-- Manual:
-  - Requirement mapping to assignment rubric.
-  - Final validation of workflow and simplification decisions.
-  - Final edits to ensure coherence and avoid overengineering.
+### AI-assisted contributions
 
-## 4) Did AI Help or Hinder Understanding?
+- Drafted route protection and token decoding integration.
+- Generated API and UI wiring for topic CRUD and AI usage logs.
+- Helped create initial docs structure (`api.md`, `architecture.md`, reflection/log drafts).
+- Proposed UI improvements and modularization into `pages/` + `components/`.
+- Generated Playwright automation script for workflow recording.
 
-- AI helped speed up repetitive boilerplate and integration tasks.
-- Understanding improved when reviewing and correcting AI output line by line.
-- AI occasionally suggested broader patterns than required; this was simplified manually.
+### Manual contributions
 
-## 5) Issues While Integrating AI Output
+- Validated rubric compliance and prioritized required fixes.
+- Corrected role-access boundaries and endpoint behavior.
+- Resolved integration bug where frontend on port `5174` failed due to backend CORS allowlist mismatch.
+- Fixed dependency compatibility (`passlib` + `bcrypt`) while initializing lightweight DB.
+- Cleaned repository history/artifacts (kept only final workflow video, updated `.gitignore`).
+- Reviewed and edited docs to remove outdated statements (for example, JWT middleware TODO after it was implemented).
 
-- Missing edge-case checks and authorization boundaries in first drafts.
-- Need to align AI-generated changes to existing code style and assignment scope.
-- Some generated logic required manual cleanup for clarity.
+## 4) How AI Helped and Where It Did Not
 
-## 6) Learning from Debugging AI Code
+AI helped significantly in reducing implementation time for repetitive coding tasks and refactor scaffolding. It was especially useful for generating consistent endpoint wiring and UI boilerplate.
 
-- Better understanding of JWT verification flow in FastAPI.
-- Better understanding of route-based rendering in React.
-- Learned to constrain prompts to keep solutions simple and assignment-oriented.
+However, AI output was not always correct in context. Some responses reflected generic assumptions (for example, stale documentation wording or brittle selector assumptions in browser automation). These required manual debugging and domain-specific corrections.
 
-## 7) Conclusion
+## 5) Key Integration/Debugging Issues Encountered
 
-AI was effective as a coding accelerator, but correctness and scope control still depended on manual review and debugging.
+1. **CORS failure during login in automated browser flow**  
+   Frontend was running at `localhost:5174`, but backend CORS allowed only `5173`.  
+   Fix: expanded `allow_origins` list in FastAPI middleware.
+
+2. **SQLite bootstrap failed due to bcrypt/passlib mismatch**  
+   Error occurred while hashing seeded user passwords.  
+   Fix: pinned `bcrypt==4.0.1` in backend requirements.
+
+3. **Initial Playwright selectors were unstable**  
+   Some label-based selectors timed out due to page/form structure.  
+   Fix: revised script to stable scoped selectors and added better fallback checks.
+
+4. **Repository noise from generated artifacts**  
+   Multiple temporary videos and local DB file created clutter.  
+   Fix: ignored runtime artifacts and retained only required workflow video in remote.
+
+## 6) Learning Outcomes
+
+- Better understanding of secure API layering in FastAPI (JWT decode + role checks + route dependencies).
+- Practical understanding of frontend/backend integration pitfalls (especially CORS and environment/port mismatches).
+- Improved confidence in refactoring a single-file React UI into modular route/page/component structure.
+- Better judgment in using AI as an accelerator while preserving correctness through manual review.
+
+## 7) Final Reflection
+
+AI improved delivery speed and enabled rapid iteration, but correctness still depended on manual reasoning, testing, and cleanup. The most valuable learning came from debugging AI-generated code, not just accepting it. Overall, AI helped productivity while still requiring strong developer ownership of quality and final decisions.
