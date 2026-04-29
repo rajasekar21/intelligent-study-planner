@@ -1,30 +1,63 @@
-# Architecture (Simple Full-Stack)
+# Intelligent Study Planner - Architecture
 
-## Overview
+## Architecture Diagram
 
-This project uses a simple 3-layer architecture:
+```mermaid
+flowchart LR
+    U[User Browser]
+    FE[React 18 + Vite Frontend]
+    BE[FastAPI Backend API]
+    AI[AI Microservice FastAPI]
+    DB[(SQLite DB)]
 
-1. React frontend (`frontend`)
-2. FastAPI backend (`backend`)
-3. SQLite database (`backend/study_planner.db`)
+    U --> FE
+    FE -->|REST + JWT Bearer| BE
+    BE -->|SQLAlchemy ORM| DB
+    BE -->|HTTP call via httpx| AI
+    AI -->|priority scores + weekly tasks| BE
+```
 
-## Component Flow
+## Layer / Component Description
 
-- User interacts with React UI (login/register/dashboard routes).
-- Frontend calls backend REST APIs using `fetch`.
-- Backend validates input using Pydantic schemas.
-- Backend applies role checks and token verification.
-- SQLAlchemy persists and reads data from SQLite.
+- **Frontend (React + Vite)**  
+  Handles UI routes (`/login`, `/register`, `/dashboard`), user interactions, form state, and API requests through a centralized client (`api.js`).
 
-## Service Boundary
+- **Backend (FastAPI + SQLAlchemy)**  
+  Exposes core APIs for authentication, topics, planner tasks, doubts, insights, and AI usage logs.  
+  Handles JWT validation and role checks (`student`, `mentor`, `admin`) before protected operations.
 
-- Current backend is a single service for simplicity.
-- AI planner logic is kept in `backend/app/ai.py` as an internal module.
-- For future microservice extension, planner logic can be moved to a standalone service.
+- **AI Microservice (FastAPI)**  
+  Runs as a separate process (default `:8001`) and provides:
+  - `POST /generate-plan`
+  - `POST /priority-score`  
+  It encapsulates planning/scoring logic so the main backend remains focused on business APIs and persistence.
 
-## Suggested Diagram (for LMS submission)
+- **Database (SQLite)**  
+  Stores users, topics, study tasks, doubts, and AI usage logs.  
+  SQLAlchemy models manage relationships and CRUD persistence.
 
-Draw a simple block diagram with:
-- React App -> FastAPI API -> SQLite
-- Add JWT label between React and FastAPI
-- Add modules in FastAPI: Auth, Topics, Planner, Doubts, Insights
+## Data Flow for Key Actions
+
+### 1) Login
+
+1. User submits email/password in frontend.
+2. Frontend calls `POST /auth/login` on backend.
+3. Backend validates credentials, returns JWT token + user profile.
+4. Frontend stores token in runtime state and includes it in `Authorization: Bearer <token>` for protected APIs.
+
+### 2) Generate Plan
+
+1. User clicks "Generate AI Weekly Plan" in dashboard.
+2. Frontend calls `POST /planner/generate?student_id={id}`.
+3. Backend loads student topics + unresolved doubt counts from SQLite.
+4. Backend calls AI microservice `POST /generate-plan` with topic metadata.
+5. AI service returns planned weekly tasks with priority scores.
+6. Backend replaces existing planner tasks for that student and persists new tasks.
+7. Frontend refreshes tasks/insights from backend.
+
+### 3) Raise Doubt
+
+1. User submits doubt form from dashboard.
+2. Frontend calls `POST /doubts?student_id={id}` with title/description/topic reference.
+3. Backend validates ownership and stores doubt in SQLite.
+4. Frontend reloads doubts list; mentors/admins can later update status via `PATCH /doubts/{id}`.
