@@ -174,7 +174,7 @@ Weekly schedule generation allocates topic tasks across 7 days with max daily lo
 
 ## 10) Suggested Next Improvements
 
-- Proper JWT auth middleware for protected routes
+- Stronger refresh-token and session management
 - Separate mentor/admin dashboards and route guards
 - AI service as standalone microservice
 - Better planning algorithm using study-hour preferences and exam calendar
