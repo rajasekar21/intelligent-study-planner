@@ -12,6 +12,7 @@
 - [Architecture](docs/architecture.md)
 - [API Docs](docs/api.md)
 - [DB Schema](docs/db-schema.md)
+- [Component Hierarchy](docs/component-hierarchy.md)
 - [AI Usage Log](docs/ai-usage-log.md)
 - [Reflection Report](docs/reflection-report.md)
 
@@ -256,6 +257,7 @@ Weekly schedule generation allocates topic tasks across 7 days with max daily lo
 - Student can access only own data.
 - Mentor/Admin can update doubt review status.
 - Admin can access any student data.
+- Public routes intentionally limited to `POST /auth/register`, `POST /auth/login`, and `GET /health`.
 - This project intentionally keeps security simple for assignment scope.
 
 ## 14) Contributors and AI Assistance
@@ -267,9 +269,11 @@ Weekly schedule generation allocates topic tasks across 7 days with max daily lo
 ## Assignment Deliverables
 
 - [ ] GitHub repo (public)
-- [ ] Demo video (Google Drive)
+- [ ] Demo video (Google Drive) with permission set to "Anyone at BITS with the link can view"
+- [ ] Demo video link added in both `README.md` and LMS submission
 - [ ] API docs
 - [ ] DB schema
 - [ ] Architecture diagram
+- [ ] Component hierarchy (`docs/component-hierarchy.md`)
 - [ ] AI usage log
-- [ ] Reflection report
+- [ ] Reflection report (written in my own words)

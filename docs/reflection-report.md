@@ -1,5 +1,7 @@
 # Reflection Report – AI Powered Study Planner
 
+I wrote this reflection in my own words based on my project work, debugging notes, and final implementation decisions.
+
 ## 1) Which AI tools were used and how
 
 For this assignment I used **Cursor AI** throughout development as my main coding assistant. I used it in an iterative way, not in a copy-paste way. My process was:
@@ -85,6 +87,16 @@ Key issues I faced while integrating AI output:
    Multiple generated demo videos got committed temporarily; I had to clean and keep only the final required one.
 
 These were not theoretical issues; they required debugging and real corrections.
+
+## 5.1) JWT middleware verification and scope
+
+I rechecked my backend before submission to confirm middleware coverage:
+
+- Protected with JWT (`get_current_user`): topics, planner, doubts (list/create), insights, and AI log routes.
+- Role-guarded with JWT + role check (`require_role("mentor", "admin")`): doubt status update route.
+- Intentionally public: `POST /auth/register`, `POST /auth/login`, and `GET /health`.
+
+This scope is intentional for assignment requirements, and I documented the same scope in the README so docs match runtime behavior.
 
 ## 6) What I learned from debugging AI output
 
