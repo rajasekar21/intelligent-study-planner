@@ -1,4 +1,4 @@
-# Intelligent Study Planner - Architecture
+# AI Powered Study Planner - Architecture
 
 ## Architecture Diagram
 

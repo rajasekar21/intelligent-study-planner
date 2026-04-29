@@ -1,0 +1,91 @@
+Welcome to the AI Powered Study Planner workflow demonstration.
+In this walkthrough, I will clearly explain the complete end to end flow of the project,
+from login and topic planning to doubt tracking, insights, and AI usage documentation.
+
+We start at the authentication page.
+The application supports role based access with student, mentor, and admin users.
+For this demo, I am logging in as a student user.
+After entering email and password, the app validates credentials through the FastAPI backend,
+returns a JWT token, and stores session details so the dashboard can load personalized data.
+
+Once login is successful, we land on the main dashboard.
+At the top, you can see quick actions and summary metrics.
+These include completion rate, missed tasks, open doubts, and the current risk level.
+These metrics are calculated from live planner and doubt data.
+
+Now I will add a syllabus topic.
+In the Add Syllabus Topic section, I provide subject name, topic title, deadline, and difficulty.
+This data is saved in SQLite through the backend topic API.
+Validation checks ensure required fields are present and difficulty remains in the allowed range.
+After saving, the topic appears in the topics list immediately.
+
+Next, I demonstrate AI weekly plan generation.
+When I click Generate AI Weekly Plan, the backend sends topic data to a separate AI microservice.
+The microservice calculates priority using three factors:
+deadline urgency, topic difficulty, and unresolved doubts.
+Then it returns a balanced one week task plan.
+Back in the dashboard, generated tasks appear with status chips.
+This confirms frontend, backend, and microservice integration is working correctly.
+
+Now we update task progress.
+Each task can be marked completed or missed.
+As statuses change, insights recalculate automatically.
+This gives students fast feedback on consistency and possible academic risk.
+This part of the flow is important for evaluators,
+because it shows two way data interaction, update operations, and live UI reactivity.
+
+Next, I raise a doubt.
+In the Raise Doubt section, I can optionally map the doubt to a topic using the dropdown.
+This is more user friendly than entering raw numeric IDs.
+I enter a clear title and description, then submit.
+The backend saves the doubt with open status,
+and it becomes visible in the doubt tracking panel.
+Mentor or admin users can later review and resolve these doubts.
+
+Now I demonstrate topic management features.
+In the Topics section, we can search by subject or title,
+edit existing entries, and delete when needed.
+These actions call secure APIs with token authorization.
+This demonstrates full CRUD behavior,
+which is one of the major assignment evaluation criteria.
+
+The next section is AI Usage Log.
+Here I record how AI assistance was used during development.
+I enter tool name, prompt, completion summary,
+action taken, impacted files, and optional notes.
+After saving, entries are stored in the database.
+This supports assignment transparency requirements,
+and proves that AI output was reviewed before final integration.
+
+From Saved AI Logs, I can generate markdown export.
+This export can be copied and reused for final report submission.
+It gives a clean, structured record of prompts and manual decisions.
+This is useful for both the AI usage log and reflection report.
+
+At this stage, we have validated the full workflow:
+authentication,
+planning input,
+AI based scheduling,
+task updates,
+doubt handling,
+insight generation,
+and AI usage documentation.
+All key parts are integrated and functional.
+
+Let us briefly review the architecture behind this flow.
+The React frontend handles user interaction and state.
+The FastAPI backend manages authentication, business logic, and database operations.
+SQLite provides lightweight persistence for local demonstration.
+A dedicated AI microservice handles priority scoring and plan generation.
+The backend communicates with this service over HTTP using httpx.
+This separation keeps the architecture modular and closer to microservice style expectations.
+
+For assignment review, this demo highlights the major rubric points:
+backend APIs with validation and docs,
+frontend navigation and interactivity,
+frontend backend integration,
+meaningful problem statement implementation,
+and clear evidence of AI assisted development with manual verification.
+
+Thank you for watching this walkthrough of the AI Powered Study Planner.
+This concludes the end to end demonstration video.

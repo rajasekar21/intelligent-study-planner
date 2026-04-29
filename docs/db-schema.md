@@ -1,4 +1,4 @@
-# Intelligent Study Planner - DB Schema
+# AI Powered Study Planner - DB Schema
 
 ## ER Diagram
 

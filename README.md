@@ -1,8 +1,11 @@
-# Intelligent Study Planner and Doubt Tracker
+# AI Powered Study Planner
 
 ## Demo Video
 
-- [Watch Demo](YOUR_GOOGLE_DRIVE_LINK_HERE)
+- [Watch Demo](https://drive.google.com/drive/folders/1t1qviVVjGLx9-FJE6J2N_Hpt7qelSrKm?usp=sharing)
+- Local generated files:
+  - `frontend/demo-videos/workflow-demo-video.webm`
+  - `frontend/demo-videos/workflow-demo-video.mp4`
 
 ## Documentation
 
@@ -159,10 +162,10 @@ From project root:
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev -- --port 5174
 ```
 
-Frontend URL: `http://127.0.0.1:5173`
+Frontend URL: `http://localhost:5174`
 
 Frontend environment:
 
@@ -170,17 +173,6 @@ Frontend environment:
 # frontend/.env
 VITE_API_BASE_URL=http://127.0.0.1:8000
 ```
-
-## Demo Video
-
-- Google Drive demo link: [Workflow Demo Video](https://drive.google.com/drive/folders/1t1qviVVjGLx9-FJE6J2N_Hpt7qelSrKm?usp=sharing)
-- Suggested flow covered in demo:
-  - Login/Register
-  - Topic CRUD and search
-  - AI weekly planner generation and task status update
-  - Doubt submission and tracking
-  - Insights dashboard
-  - AI usage log creation and markdown export
 
 ## 9) API Endpoints
 
@@ -238,9 +230,10 @@ Weekly schedule generation allocates topic tasks across 7 days with max daily lo
 - Backend APIs + validation + docs: implemented
 - Frontend UI + interactivity: implemented
 - Integration: implemented
-- AI-assisted module: implemented (`ai.py`)
+- AI-assisted module: implemented (`ai-service/main.py`)
 - Ready for:
   - architecture diagram (`docs/architecture.md`)
+  - database schema (`docs/db-schema.md`)
   - AI usage log (`docs/ai-usage-log.md`)
   - reflection report (`docs/reflection-report.md`)
   - API documentation notes (`docs/api.md`)

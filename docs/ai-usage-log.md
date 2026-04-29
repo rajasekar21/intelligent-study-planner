@@ -1,4 +1,4 @@
-# AI Usage Log – Intelligent Study Planner
+# AI Usage Log – AI Powered Study Planner
 
 ## 1) Summary of AI tool used and how
 

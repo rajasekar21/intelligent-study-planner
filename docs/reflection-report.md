@@ -1,4 +1,4 @@
-# Reflection Report – Intelligent Study Planner
+# Reflection Report – AI Powered Study Planner
 
 ## 1) Which AI tools were used and how
 

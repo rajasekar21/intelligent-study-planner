@@ -79,7 +79,13 @@ async function run() {
   }
 
   const doubtCard = page.locator("section.card", { has: page.getByRole("heading", { name: "Raise Doubt" }) });
-  await doubtCard.locator("input").nth(1).fill("Need help with deadlock conditions");
+  const topicSelect = doubtCard.locator("select");
+  if ((await topicSelect.count()) > 0) {
+    await topicSelect.selectOption({ index: 1 }).catch(async () => {
+      await topicSelect.selectOption({ value: "" });
+    });
+  }
+  await doubtCard.locator("input").first().fill("Need help with deadlock conditions");
   await doubtCard
     .locator("textarea")
     .first()

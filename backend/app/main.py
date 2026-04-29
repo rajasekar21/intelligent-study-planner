@@ -32,7 +32,7 @@ AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://127.0.0.1:8001")
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Intelligent Study Planner API", version="1.0.0")
+app = FastAPI(title="AI Powered Study Planner API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
