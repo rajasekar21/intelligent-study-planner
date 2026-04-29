@@ -4,8 +4,8 @@
 
 - [Watch Demo](https://drive.google.com/drive/folders/1t1qviVVjGLx9-FJE6J2N_Hpt7qelSrKm?usp=sharing)
 - Local generated files:
-  - `frontend/demo-videos/workflow-demo-video.webm`
   - `frontend/demo-videos/workflow-demo-video.mp4`
+  - `frontend/demo-videos/workflow-demo-video-voiceover-5min.mp4`
 
 ## Documentation
 
@@ -43,8 +43,20 @@ intelligent-study-planner/
 │   ├── src/
 │   │   ├── api.js
 │   │   ├── App.jsx
+│   │   ├── components/
+│   │   │   └── AuthForm.jsx
 │   │   ├── main.jsx
+│   │   ├── pages/
+│   │   │   ├── DashboardPage.jsx
+│   │   │   ├── LoginPage.jsx
+│   │   │   └── RegisterPage.jsx
 │   │   └── styles.css
+│   ├── demo-videos/
+│   │   ├── workflow-demo-video.mp4
+│   │   └── workflow-demo-video-voiceover-5min.mp4
+│   ├── scripts/
+│   │   ├── convert-video-to-mp4.mjs
+│   │   └── create-demo-video.mjs
 │   ├── index.html
 │   ├── package.json
 │   └── vite.config.js
@@ -162,7 +174,7 @@ From project root:
 ```bash
 cd frontend
 npm install
-npm run dev -- --port 5174
+npm run dev
 ```
 
 Frontend URL: `http://localhost:5174`
