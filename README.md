@@ -130,7 +130,7 @@ VITE_API_BASE_URL=http://127.0.0.1:8000
 
 ## Demo Video
 
-- Google Drive demo link: [Add your demo video link here](https://drive.google.com/)
+- Google Drive demo link: [Workflow Demo Video](https://drive.google.com/drive/folders/1t1qviVVjGLx9-FJE6J2N_Hpt7qelSrKm?usp=sharing)
 - Suggested flow covered in demo:
   - Login/Register
   - Topic CRUD and search
