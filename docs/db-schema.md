@@ -14,7 +14,7 @@ erDiagram
     USERS {
         int id PK
         string name
-        string email UNIQUE
+        string email UK
         string password_hash
         string role
         datetime created_at
