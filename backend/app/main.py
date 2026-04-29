@@ -1,12 +1,11 @@
 from collections import defaultdict
 
-from fastapi import Depends, FastAPI, HTTPException, Query, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .ai import build_week_dates, calculate_priority
-from .auth import create_access_token, decode_access_token, hash_password, verify_password
+from .auth import create_access_token, get_current_user, hash_password, require_role, verify_password
 from .database import Base, engine, get_db
 from .models import AIUsageLog, Doubt, StudyTask, Topic, User
 from .schemas import (
@@ -28,7 +27,6 @@ from .schemas import (
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Intelligent Study Planner API", version="1.0.0")
-security = HTTPBearer()
 
 app.add_middleware(
     CORSMiddleware,
@@ -47,20 +45,6 @@ app.add_middleware(
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
-
-
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db),
-) -> User:
-    payload = decode_access_token(credentials.credentials)
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
-    user = db.query(User).filter(User.id == int(user_id)).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    return user
 
 
 def ensure_same_user_or_admin(current_user: User, student_id: int) -> None:
@@ -297,13 +281,11 @@ def update_doubt(
     doubt_id: int,
     payload: DoubtUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("mentor", "admin")),
 ):
     doubt = db.query(Doubt).filter(Doubt.id == doubt_id).first()
     if not doubt:
         raise HTTPException(status_code=404, detail="Doubt not found")
-    if current_user.role == "student":
-        raise HTTPException(status_code=403, detail="Only mentor/admin can review doubts")
     doubt.status = payload.status
     doubt.mentor_comment = payload.mentor_comment
     db.commit()
