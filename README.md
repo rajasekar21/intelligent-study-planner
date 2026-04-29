@@ -1,5 +1,17 @@
 # Intelligent Study Planner and Doubt Tracker
 
+## Demo Video
+
+- [Watch Demo](YOUR_GOOGLE_DRIVE_LINK_HERE)
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [API Docs](docs/api.md)
+- [DB Schema](docs/db-schema.md)
+- [AI Usage Log](docs/ai-usage-log.md)
+- [Reflection Report](docs/reflection-report.md)
+
 Full-stack assignment project using:
 - React (frontend)
 - Python FastAPI (backend)
@@ -246,3 +258,13 @@ Weekly schedule generation allocates topic tasks across 7 days with max daily lo
 - Primary developer: `rajasekar21`
 - AI development assistant: Cursor AI (used for code generation, refactoring, debugging support, and documentation drafting)
 - All AI-assisted output was manually reviewed, tested, and integrated before final use.
+
+## Assignment Deliverables
+
+- [ ] GitHub repo (public)
+- [ ] Demo video (Google Drive)
+- [ ] API docs
+- [ ] DB schema
+- [ ] Architecture diagram
+- [ ] AI usage log
+- [ ] Reflection report
