@@ -71,21 +71,32 @@ start_python_service() {
   if [[ -n "$init_cmd" ]]; then
     (cd "$service_dir" && eval "$init_cmd")
   fi
-  nohup uvicorn "$uvicorn_target" --host "$BIND_HOST" --port "$port" >"$log_file" 2>&1 &
-  local pid=$!
+  (cd "$service_dir" && nohup uvicorn "$uvicorn_target" --host "$BIND_HOST" --port "$port" >"$log_file" 2>&1 & echo $!)
   deactivate
-  echo "$pid"
+}
+
+show_log_tail() {
+  local log_file="$1"
+
+  if [[ -f "$log_file" ]]; then
+    echo "Last lines from $log_file:" >&2
+    tail -n 80 "$log_file" >&2 || true
+  else
+    echo "No log file found at $log_file" >&2
+  fi
 }
 
 wait_for_url() {
   local url="$1"
   local name="$2"
+  local log_file="$3"
   local max_retries=30
   local retry=1
 
   until curl -fsS "$url" >/dev/null 2>&1; do
     if (( retry >= max_retries )); then
       echo "ERROR: $name did not become healthy: $url" >&2
+      show_log_tail "$log_file"
       return 1
     fi
     sleep 1
@@ -118,9 +129,9 @@ rm -f "$ROOT_DIR/.frontend.pid.tmp"
 
 printf "AI_PID=%s\nBACKEND_PID=%s\nFRONTEND_PID=%s\n" "$AI_PID" "$BACKEND_PID" "$FRONTEND_PID" > "$PIDS_FILE"
 
-wait_for_url "http://${HEALTH_HOST}:${AI_PORT}/health" "AI service"
-wait_for_url "http://${HEALTH_HOST}:${BACKEND_PORT}/health" "Backend service"
-wait_for_url "http://${HEALTH_HOST}:${FRONTEND_PORT}" "Frontend UI"
+wait_for_url "http://${HEALTH_HOST}:${AI_PORT}/health" "AI service" "$LOG_DIR/ai-service.log"
+wait_for_url "http://${HEALTH_HOST}:${BACKEND_PORT}/health" "Backend service" "$LOG_DIR/backend.log"
+wait_for_url "http://${HEALTH_HOST}:${FRONTEND_PORT}" "Frontend UI" "$LOG_DIR/frontend.log"
 
 AI_URL="http://${ACCESS_HOST}:${AI_PORT}"
 BACKEND_URL="http://${ACCESS_HOST}:${BACKEND_PORT}"
