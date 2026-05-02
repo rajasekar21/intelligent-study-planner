@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -33,6 +36,3 @@ stop_pid "Frontend UI" "${FRONTEND_PID:-}"
 
 rm -f "$PIDS_FILE"
 echo "Removed PID file: $PIDS_FILE"
-
-
-
