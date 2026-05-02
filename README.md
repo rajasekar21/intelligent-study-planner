@@ -4,9 +4,7 @@
 
 - [Watch Demo](https://drive.google.com/drive/folders/1t1qviVVjGLx9-FJE6J2N_Hpt7qelSrKm?usp=sharing)
 - [Demo Workflow Guide](docs/demo-workflow.md)
-- Local generated files:
-  - `frontend/demo-videos/workflow-demo-video.mp4`
-  - `frontend/demo-videos/workflow-demo-video-voiceover-5min.mp4`
+
 
 ## Documentation
 
