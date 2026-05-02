@@ -298,3 +298,4 @@ Weekly schedule generation allocates topic tasks across 7 days with max daily lo
 - [ ] Component hierarchy (`docs/component-hierarchy.md`)
 - [ ] AI usage log
 - [ ] Reflection report (written in my own words)
+

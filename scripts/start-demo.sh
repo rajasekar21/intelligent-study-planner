@@ -1,3 +1,9 @@
+
+---
+
+## `scripts/start-demo.sh`
+
+```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -11,6 +17,9 @@ LOG_DIR="$ROOT_DIR/.demo-logs"
 AI_PORT="${AI_PORT:-8001}"
 BACKEND_PORT="${BACKEND_PORT:-8000}"
 FRONTEND_PORT="${FRONTEND_PORT:-5174}"
+BIND_HOST="${BIND_HOST:-0.0.0.0}"
+HEALTH_HOST="${HEALTH_HOST:-127.0.0.1}"
+ACCESS_HOST="${ACCESS_HOST:-localhost}"
 
 command -v python3 >/dev/null 2>&1 || { echo "python3 is required"; exit 1; }
 command -v npm >/dev/null 2>&1 || { echo "npm is required"; exit 1; }
@@ -31,6 +40,7 @@ start_python_service() {
   local uvicorn_target="$3"
   local port="$4"
   local log_file="$5"
+  local init_cmd="${6:-}"
 
   local venv_dir="$service_dir/.venv"
   if [[ ! -d "$venv_dir" ]]; then
@@ -41,7 +51,10 @@ start_python_service() {
   # shellcheck disable=SC1090
   source "$venv_dir/bin/activate"
   pip install -r "$requirements_file" >/dev/null
-  nohup uvicorn "$uvicorn_target" --host 127.0.0.1 --port "$port" >"$log_file" 2>&1 &
+  if [[ -n "$init_cmd" ]]; then
+    (cd "$service_dir" && eval "$init_cmd")
+  fi
+  nohup uvicorn "$uvicorn_target" --host "$BIND_HOST" --port "$port" >"$log_file" 2>&1 &
   local pid=$!
   deactivate
   echo "$pid"
@@ -69,7 +82,7 @@ echo "Starting AI service..."
 AI_PID="$(start_python_service "$AI_DIR" "$AI_DIR/requirements.txt" "main:app" "$AI_PORT" "$LOG_DIR/ai-service.log")"
 
 echo "Starting backend service..."
-BACKEND_PID="$(start_python_service "$BACKEND_DIR" "$BACKEND_DIR/requirements.txt" "app.main:app" "$BACKEND_PORT" "$LOG_DIR/backend.log")"
+BACKEND_PID="$(start_python_service "$BACKEND_DIR" "$BACKEND_DIR/requirements.txt" "app.main:app" "$BACKEND_PORT" "$LOG_DIR/backend.log" "python init_lightweight_db.py >/dev/null")"
 
 echo "Ensuring frontend dependencies..."
 (
@@ -80,7 +93,7 @@ echo "Ensuring frontend dependencies..."
 echo "Starting frontend UI..."
 (
   cd "$FRONTEND_DIR"
-  nohup npm run dev -- --host 127.0.0.1 --port "$FRONTEND_PORT" >"$LOG_DIR/frontend.log" 2>&1 &
+  nohup npm run dev -- --host "$BIND_HOST" --port "$FRONTEND_PORT" >"$LOG_DIR/frontend.log" 2>&1 &
   echo $! > "$ROOT_DIR/.frontend.pid.tmp"
 )
 FRONTEND_PID="$(cat "$ROOT_DIR/.frontend.pid.tmp")"
@@ -88,16 +101,26 @@ rm -f "$ROOT_DIR/.frontend.pid.tmp"
 
 printf "AI_PID=%s\nBACKEND_PID=%s\nFRONTEND_PID=%s\n" "$AI_PID" "$BACKEND_PID" "$FRONTEND_PID" > "$PIDS_FILE"
 
-wait_for_url "http://127.0.0.1:${AI_PORT}/health" "AI service"
-wait_for_url "http://127.0.0.1:${BACKEND_PORT}/health" "Backend service"
-wait_for_url "http://127.0.0.1:${FRONTEND_PORT}" "Frontend UI"
+wait_for_url "http://${HEALTH_HOST}:${AI_PORT}/health" "AI service"
+wait_for_url "http://${HEALTH_HOST}:${BACKEND_PORT}/health" "Backend service"
+wait_for_url "http://${HEALTH_HOST}:${FRONTEND_PORT}" "Frontend UI"
+
+AI_URL="http://${ACCESS_HOST}:${AI_PORT}"
+BACKEND_URL="http://${ACCESS_HOST}:${BACKEND_PORT}"
+FRONTEND_URL="http://${ACCESS_HOST}:${FRONTEND_PORT}"
+
+if [[ -n "${CODESPACE_NAME:-}" ]]; then
+  AI_URL="https://${CODESPACE_NAME}-${AI_PORT}.app.github.dev"
+  BACKEND_URL="https://${CODESPACE_NAME}-${BACKEND_PORT}.app.github.dev"
+  FRONTEND_URL="https://${CODESPACE_NAME}-${FRONTEND_PORT}.app.github.dev"
+fi
 
 cat <<MSG
 
 🎉 Demo environment is up!
-- AI service:     http://127.0.0.1:${AI_PORT}
-- Backend API:    http://127.0.0.1:${BACKEND_PORT}
-- Frontend UI:    http://127.0.0.1:${FRONTEND_PORT}
+- AI service:     ${AI_URL}
+- Backend API:    ${BACKEND_URL}
+- Frontend UI:    ${FRONTEND_URL}
 
 Logs:
 - $LOG_DIR/ai-service.log
@@ -107,5 +130,3 @@ Logs:
 PIDs are tracked in: $PIDS_FILE
 Stop services with: $ROOT_DIR/scripts/stop-demo.sh
 MSG
-
-
