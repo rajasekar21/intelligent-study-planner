@@ -71,7 +71,11 @@ start_python_service() {
   if [[ -n "$init_cmd" ]]; then
     (cd "$service_dir" && eval "$init_cmd")
   fi
-  (cd "$service_dir" && nohup uvicorn "$uvicorn_target" --host "$BIND_HOST" --port "$port" >"$log_file" 2>&1 & echo $!)
+  (
+    cd "$service_dir"
+    nohup uvicorn "$uvicorn_target" --host "$BIND_HOST" --port "$port" >"$log_file" 2>&1 &
+    echo $!
+  )
   deactivate
 }
 
