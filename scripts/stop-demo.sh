@@ -34,3 +34,4 @@ stop_pid "Frontend UI" "${FRONTEND_PID:-}"
 rm -f "$PIDS_FILE"
 echo "Removed PID file: $PIDS_FILE"
 
+
