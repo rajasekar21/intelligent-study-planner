@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const isCodespacesHost = window.location.hostname.endsWith(".app.github.dev");
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (isCodespacesHost ? "" : "http://127.0.0.1:8000");
 
 async function request(path, options = {}, token) {
   const headers = {
