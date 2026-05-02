@@ -3,6 +3,7 @@
 ## Demo Video
 
 - [Watch Demo](https://drive.google.com/drive/folders/1t1qviVVjGLx9-FJE6J2N_Hpt7qelSrKm?usp=sharing)
+- [Demo Workflow Guide](docs/demo-workflow.md)
 - Local generated files:
   - `frontend/demo-videos/workflow-demo-video.mp4`
   - `frontend/demo-videos/workflow-demo-video-voiceover-5min.mp4`
@@ -121,6 +122,8 @@ Sample login credentials:
 - `student1@bits.com` / `Test@123`
 - `mentor1@bits.com` / `Test@123`
 - `admin1@bits.com` / `Test@123`
+
+For a full recording sequence, follow [docs/demo-workflow.md](docs/demo-workflow.md).
 
 ## 5A) GitHub Codespaces
 
