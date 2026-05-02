@@ -106,6 +106,27 @@ Sample login credentials:
 - `mentor1@bits.com` / `Test@123`
 - `admin1@bits.com` / `Test@123`
 
+## 5A) One-command Demo Startup
+
+From project root, you can start AI service, backend API, and frontend UI together:
+
+```bash
+./scripts/start-demo.sh
+```
+
+To stop everything started by the script:
+
+```bash
+./scripts/stop-demo.sh
+```
+
+This startup script will:
+- create Python virtual environments if missing
+- install Python and frontend dependencies
+- start all services in background
+- write logs to `.demo-logs/`
+
+
 ## 6) AI Service Setup (FastAPI, Port 8001)
 
 From project root:
