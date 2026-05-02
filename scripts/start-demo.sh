@@ -108,3 +108,4 @@ PIDs are tracked in: $PIDS_FILE
 Stop services with: $ROOT_DIR/scripts/stop-demo.sh
 MSG
 
+
