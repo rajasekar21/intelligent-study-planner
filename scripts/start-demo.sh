@@ -1,9 +1,3 @@
-
----
-
-## `scripts/start-demo.sh`
-
-```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -21,18 +15,42 @@ BIND_HOST="${BIND_HOST:-0.0.0.0}"
 HEALTH_HOST="${HEALTH_HOST:-127.0.0.1}"
 ACCESS_HOST="${ACCESS_HOST:-localhost}"
 
-command -v python3 >/dev/null 2>&1 || { echo "python3 is required"; exit 1; }
-command -v npm >/dev/null 2>&1 || { echo "npm is required"; exit 1; }
-command -v curl >/dev/null 2>&1 || { echo "curl is required"; exit 1; }
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN="python3"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_BIN="python"
+else
+  echo "python3 or python is required" >&2
+  exit 1
+fi
+
+command -v npm >/dev/null 2>&1 || { echo "npm is required" >&2; exit 1; }
+command -v curl >/dev/null 2>&1 || { echo "curl is required" >&2; exit 1; }
 
 mkdir -p "$LOG_DIR"
 
 if [[ -f "$PIDS_FILE" ]]; then
-  echo "Found existing $PIDS_FILE. If services are already running, stop them first."
-  echo "Tip: kill the listed PIDs manually or remove the file if stale."
+  echo "Found existing $PIDS_FILE. If services are already running, stop them first." >&2
+  echo "Tip: kill the listed PIDs manually or remove the file if stale." >&2
   cat "$PIDS_FILE" || true
   exit 1
 fi
+
+activate_venv() {
+  local venv_dir="$1"
+
+  if [[ -f "$venv_dir/bin/activate" ]]; then
+    # shellcheck disable=SC1091
+    source "$venv_dir/bin/activate"
+  elif [[ -f "$venv_dir/Scripts/activate" ]]; then
+    # Git Bash on Windows uses the Windows venv layout.
+    # shellcheck disable=SC1091
+    source "$venv_dir/Scripts/activate"
+  else
+    echo "Could not find virtual environment activation script in $venv_dir" >&2
+    return 1
+  fi
+}
 
 start_python_service() {
   local service_dir="$1"
@@ -44,12 +62,11 @@ start_python_service() {
 
   local venv_dir="$service_dir/.venv"
   if [[ ! -d "$venv_dir" ]]; then
-    echo "Creating virtual environment in $venv_dir"
-    python3 -m venv "$venv_dir"
+    echo "Creating virtual environment in $venv_dir" >&2
+    "$PYTHON_BIN" -m venv "$venv_dir"
   fi
 
-  # shellcheck disable=SC1090
-  source "$venv_dir/bin/activate"
+  activate_venv "$venv_dir"
   pip install -r "$requirements_file" >/dev/null
   if [[ -n "$init_cmd" ]]; then
     (cd "$service_dir" && eval "$init_cmd")
@@ -68,14 +85,14 @@ wait_for_url() {
 
   until curl -fsS "$url" >/dev/null 2>&1; do
     if (( retry >= max_retries )); then
-      echo "❌ $name did not become healthy: $url"
+      echo "ERROR: $name did not become healthy: $url" >&2
       return 1
     fi
     sleep 1
     ((retry++))
   done
 
-  echo "✅ $name is running at $url"
+  echo "OK: $name is running at $url"
 }
 
 echo "Starting AI service..."
@@ -117,7 +134,7 @@ fi
 
 cat <<MSG
 
-🎉 Demo environment is up!
+Demo environment is up!
 - AI service:     ${AI_URL}
 - Backend API:    ${BACKEND_URL}
 - Frontend UI:    ${FRONTEND_URL}
