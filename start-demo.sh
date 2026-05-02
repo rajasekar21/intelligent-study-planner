@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+AI_DIR="$ROOT_DIR/ai-service"
+BACKEND_DIR="$ROOT_DIR/backend"
+FRONTEND_DIR="$ROOT_DIR/frontend"
+PIDS_FILE="$ROOT_DIR/.demo-services.pids"
+LOG_DIR="$ROOT_DIR/.demo-logs"
+
+AI_PORT="${AI_PORT:-8001}"
+BACKEND_PORT="${BACKEND_PORT:-8000}"
+FRONTEND_PORT="${FRONTEND_PORT:-5174}"
+
+command -v python3 >/dev/null 2>&1 || { echo "python3 is required"; exit 1; }
+command -v npm >/dev/null 2>&1 || { echo "npm is required"; exit 1; }
+command -v curl >/dev/null 2>&1 || { echo "curl is required"; exit 1; }
+
+mkdir -p "$LOG_DIR"
+
+if [[ -f "$PIDS_FILE" ]]; then
+  echo "Found existing $PIDS_FILE. If services are already running, stop them first."
+  echo "Tip: kill the listed PIDs manually or remove the file if stale."
+  cat "$PIDS_FILE" || true
+  exit 1
+fi
+
+start_python_service() {
+  local service_dir="$1"
+  local requirements_file="$2"
+  local uvicorn_target="$3"
+  local port="$4"
+  local log_file="$5"
+
+  local venv_dir="$service_dir/.venv"
+  if [[ ! -d "$venv_dir" ]]; then
+    echo "Creating virtual environment in $venv_dir"
+    python3 -m venv "$venv_dir"
+  fi
+
+  # shellcheck disable=SC1090
+  source "$venv_dir/bin/activate"
+  pip install -r "$requirements_file" >/dev/null
+  nohup uvicorn "$uvicorn_target" --host 127.0.0.1 --port "$port" >"$log_file" 2>&1 &
+  local pid=$!
+  deactivate
+  echo "$pid"
+}
+
+wait_for_url() {
+  local url="$1"
+  local name="$2"
+  local max_retries=30
+  local retry=1
+
+  until curl -fsS "$url" >/dev/null 2>&1; do
+    if (( retry >= max_retries )); then
+      echo "❌ $name did not become healthy: $url"
+      return 1
+    fi
+    sleep 1
+    ((retry++))
+  done
+
+  echo "✅ $name is running at $url"
+}
+
+echo "Starting AI service..."
+AI_PID="$(start_python_service "$AI_DIR" "$AI_DIR/requirements.txt" "main:app" "$AI_PORT" "$LOG_DIR/ai-service.log")"
+
+echo "Starting backend service..."
+BACKEND_PID="$(start_python_service "$BACKEND_DIR" "$BACKEND_DIR/requirements.txt" "app.main:app" "$BACKEND_PORT" "$LOG_DIR/backend.log")"
+
+echo "Ensuring frontend dependencies..."
+(
+  cd "$FRONTEND_DIR"
+  npm install >/dev/null
+)
+
+echo "Starting frontend UI..."
+(
+  cd "$FRONTEND_DIR"
+  nohup npm run dev -- --host 127.0.0.1 --port "$FRONTEND_PORT" >"$LOG_DIR/frontend.log" 2>&1 &
+  echo $! > "$ROOT_DIR/.frontend.pid.tmp"
+)
+FRONTEND_PID="$(cat "$ROOT_DIR/.frontend.pid.tmp")"
+rm -f "$ROOT_DIR/.frontend.pid.tmp"
+
+printf "AI_PID=%s\nBACKEND_PID=%s\nFRONTEND_PID=%s\n" "$AI_PID" "$BACKEND_PID" "$FRONTEND_PID" > "$PIDS_FILE"
+
+wait_for_url "http://127.0.0.1:${AI_PORT}/health" "AI service"
+wait_for_url "http://127.0.0.1:${BACKEND_PORT}/health" "Backend service"
+wait_for_url "http://127.0.0.1:${FRONTEND_PORT}" "Frontend UI"
+
+cat <<MSG
+
+🎉 Demo environment is up!
+- AI service:     http://127.0.0.1:${AI_PORT}
+- Backend API:    http://127.0.0.1:${BACKEND_PORT}
+- Frontend UI:    http://127.0.0.1:${FRONTEND_PORT}
+
+Logs:
+- $LOG_DIR/ai-service.log
+- $LOG_DIR/backend.log
+- $LOG_DIR/frontend.log
+
+PIDs are tracked in: $PIDS_FILE
+Stop services with: $ROOT_DIR/scripts/stop-demo.sh
+MSG
+
